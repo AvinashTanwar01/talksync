@@ -4,7 +4,9 @@ import {
   getOutgoingFriendReqs,
   getRecommendedUsers,
   getUserFriends,
+  getFriendRequests,
   sendFriendRequest,
+  acceptFriendRequest,
 } from "../lib/api";
 import { Link } from "react-router";
 import { CheckCircleIcon, MapPinIcon, UserPlusIcon, UsersIcon } from "lucide-react";
@@ -28,14 +30,29 @@ const HomePage = () => {
     queryFn: getRecommendedUsers,
   });
 
-  const { data: outgoingFriendReqs } = useQuery({
+  const { data: outgoingFriendReqs = [] } = useQuery({
     queryKey: ["outgoingFriendReqs"],
     queryFn: getOutgoingFriendReqs,
   });
 
-  const { mutate: sendRequestMutation, isPending } = useMutation({
+  const { data: friendRequests } = useQuery({
+    queryKey: ["friendRequests"],
+    queryFn: getFriendRequests,
+  });
+
+  const incomingReqs = friendRequests?.incomingReqs || [];
+
+  const { mutate: sendRequestMutation, isPending: sending } = useMutation({
     mutationFn: sendFriendRequest,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
+  });
+
+  const { mutate: acceptRequestMutation, isPending: accepting } = useMutation({
+    mutationFn: acceptFriendRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+    },
   });
 
   useEffect(() => {
@@ -100,6 +117,9 @@ const HomePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendedUsers.map((user) => {
                 const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
+                const incomingRequest = incomingReqs.find(
+                  (req) => req.sender._id === user._id
+                );
 
                 return (
                   <div
@@ -123,7 +143,6 @@ const HomePage = () => {
                         </div>
                       </div>
 
-                      {/* Languages with flags */}
                       <div className="flex flex-wrap gap-1.5">
                         <span className="badge badge-secondary">
                           {getLanguageFlag(user.nativeLanguage)}
@@ -137,26 +156,37 @@ const HomePage = () => {
 
                       {user.bio && <p className="text-sm opacity-70">{user.bio}</p>}
 
-                      {/* Action button */}
-                      <button
-                        className={`btn w-full mt-2 ${
-                          hasRequestBeenSent ? "btn-disabled" : "btn-primary"
-                        } `}
-                        onClick={() => sendRequestMutation(user._id)}
-                        disabled={hasRequestBeenSent || isPending}
-                      >
-                        {hasRequestBeenSent ? (
-                          <>
-                            <CheckCircleIcon className="size-4 mr-2" />
-                            Request Sent
-                          </>
-                        ) : (
-                          <>
-                            <UserPlusIcon className="size-4 mr-2" />
-                            Send Friend Request
-                          </>
-                        )}
-                      </button>
+                      {/* Action Buttons */}
+                      {incomingRequest ? (
+                        <button
+                          className="btn btn-accent w-full mt-2"
+                          onClick={() => acceptRequestMutation(incomingRequest._id)}
+                          disabled={accepting}
+                        >
+                          <CheckCircleIcon className="size-4 mr-2" />
+                          Accept Request
+                        </button>
+                      ) : (
+                        <button
+                          className={`btn w-full mt-2 ${
+                            hasRequestBeenSent ? "btn-disabled" : "btn-primary"
+                          } `}
+                          onClick={() => sendRequestMutation(user._id)}
+                          disabled={hasRequestBeenSent || sending}
+                        >
+                          {hasRequestBeenSent ? (
+                            <>
+                              <CheckCircleIcon className="size-4 mr-2" />
+                              Request Sent
+                            </>
+                          ) : (
+                            <>
+                              <UserPlusIcon className="size-4 mr-2" />
+                              Send Friend Request
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
