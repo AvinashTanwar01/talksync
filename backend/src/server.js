@@ -8,34 +8,35 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 
-
-
-
-const app =express();
-const PORT = process.env.PORT;
+const app = express();
+const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
+
+// Dynamic CORS for dev and production
 app.use(cors({
-    origin:"http://localhost:5173",
-    credentials:true, //allow cookies to be sent with requests
-}))
+    origin: process.env.NODE_ENV === "production"
+        ? undefined // allow same-origin in production
+        : "http://localhost:5173",
+    credentials: true,
+}));
 
 app.use(express.json());
-
 app.use(cookieParser());
-app.use("/api/auth",authRoutes);
-app.use("/api/users",userRoutes);
-app.use("/api/chat",chatRoutes);
 
-if(process.env.NODE_ENV==="production"){
-    app.use(express.static(path.join(__dirname,"../frontend/dist")));
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/chat", chatRoutes);
 
-    app.get("*",(req,res)=>{
-        res.sendFile(path.join(__dirname,"../frontend","dist","index.html"));
-    })
+// Serve frontend in production
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+    app.get("*", (req, res) => {
+        res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+    });
 }
 
-
-app.listen(PORT,()=>{
+app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     connectDb();
 });
