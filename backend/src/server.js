@@ -27,8 +27,9 @@ import cors from "cors";
 
 app.use(cors({
   origin: [
-    "https://talksync-24.onrender.com", // your deployed frontend
-    "http://localhost:5173"             // for local dev (optional)
+    "https://talksync-21.onrender.com", // <-- add this
+    "https://talksync-24.onrender.com", // (if you use this too)
+    "http://localhost:5173"
   ],
   credentials: true,
 }));
