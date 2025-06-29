@@ -21,13 +21,17 @@ const __dirname = path.resolve();
 // }));
 import cors from "cors";
 
+
+
 // ...existing code...
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+    "https://talksync-24.onrender.com", // your deployed frontend
+    "http://localhost:5173"             // for local dev (optional)
+  ],
   credentials: true,
 }));
-
 app.use(express.json());
 app.use(cookieParser());
 
