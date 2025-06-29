@@ -5,7 +5,7 @@ import userRoutes from "./routes/user.js";
 import chatRoutes from "./routes/chat.js";
 import { connectDb } from "./lib/db.js";
 import cookieParser from "cookie-parser";
-import cors from "cors";
+
 import path from "path";
 
 const app = express();
@@ -13,11 +13,19 @@ const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
 // Dynamic CORS for dev and production
+// app.use(cors({
+//     origin: process.env.NODE_ENV === "production"
+//         ? undefined // allow same-origin in production
+//         : "http://localhost:5173",
+//     credentials: true,
+// }));
+import cors from "cors";
+
+// ...existing code...
+
 app.use(cors({
-    origin: process.env.NODE_ENV === "production"
-        ? undefined // allow same-origin in production
-        : "http://localhost:5173",
-    credentials: true,
+  origin: "http://localhost:5173",
+  credentials: true,
 }));
 
 app.use(express.json());
